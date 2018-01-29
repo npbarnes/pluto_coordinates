@@ -3,16 +3,30 @@ import csv
 from astropy.io import fits
 import spiceypy as sp
 import SortedSearch as ss
+from matplotlib.ticker import FuncFormatter
 
 # Leap Seconds Kernel
 sp.furnsh('/home/nathan/lib/lsk.tls')
 
 # Useful stuff
-flyby_start = sp.str2et('2015-07-14T10:00:00.0000')
-flyby_end   = sp.str2et('2015-07-14T19:00:00.0000')
+rehersal_start = sp.str2et('2015-07-12T12:00:00.0000')
+rehersal_end   = sp.str2et('2015-07-12T17:00:00.0000')
+
+#flyby_start = sp.str2et('2015-07-14T10:00:00.0000')
+#flyby_end   = sp.str2et('2015-07-14T19:00:00.0000')
+flyby_start = sp.str2et('2015-07-14T11:00:00.0000')
+flyby_end   = sp.str2et('2015-07-14T16:00:00.0000')
 
 close_start = sp.str2et('2015-07-14T11:10:00.0000')
 close_end   = sp.str2et('2015-07-14T14:20:00.0000')
+
+stupid_close_start = sp.str2et('2015-07-14T13:02:00.0000')
+stupid_close_end   = sp.str2et('2015-07-14T13:10:00.0000')
+
+@FuncFormatter
+def et_formatter(tickval, tickpos):
+    return sp.timout(tickval, 'HR:MN ::UTC')
+
 
 @np.vectorize
 def convert_JDTDB_ET(jdtdb):
@@ -94,6 +108,50 @@ def interpolate(key, arr, key_field, value_field, reverse=False):
         return tuple(np.add(np.multiply(fraction,tuple(arr[value_field][r_index])),
                             np.multiply((1-fraction),tuple(arr[value_field][l_index]))))
 
+def get_NH_pluto_coords():
+    if not hasattr(get_NH_pluto_coords, 'NH'):
+        get_NH_pluto_coords.NH = read_horizons_et('/home/nathan/Code/coordinates/NH_Sun_J2000.txt')
+        get_NH_pluto_coords.Pluto = read_horizons_et('/home/nathan/Code/coordinates/Pluto_Sun_J2000.txt')
+
+    NH = get_NH_pluto_coords.NH 
+    Pluto = get_NH_pluto_coords.Pluto
+
+    assert np.all(NH['ET'] == Pluto['ET'])
+
+    # vectors from the sun to NH for each time
+    vec_n = np.empty((NH.shape[0],3), dtype=np.float64)
+    vec_n[:,0] = NH['X']
+    vec_n[:,1] = NH['Y']
+    vec_n[:,2] = NH['Z']
+
+    # vectors from the sun to Pluto for each time
+    vec_p = np.empty((Pluto.shape[0],3), dtype=np.float64)
+    vec_p[:,0] = Pluto['X']
+    vec_p[:,1] = Pluto['Y']
+    vec_p[:,2] = Pluto['Z']
+
+    # vectors from Pluto to NH for each time
+    vec_nprime = vec_n - vec_p
+    
+    # Pluto coordinate unit vectors at each time
+    ux = -vec_p/np.sqrt(np.sum(vec_p**2,axis=1))[:,np.newaxis]
+    uy = -np.cross(ux,[0,0,1])
+    uz = np.cross(ux,uy)
+
+    # Setup the return array
+    ret_dtype = [('ET', np.float64), ('X', np.float64), ('Y', np.float64), ('Z', np.float64)]
+    ret = np.empty(NH.shape, dtype=ret_dtype)
+    ret['ET'] = NH['ET']
+
+    # These einsums are doing row-wise dot products i.e. multiply cooresponding entries and sum over columns.
+    # Same as np.sum(a*b, axis=1) but a little faster
+    ret['X'] = np.einsum('ij,ij->i',vec_nprime,ux)
+    ret['Y'] = np.einsum('ij,ij->i',vec_nprime,uy)
+    ret['Z'] = np.einsum('ij,ij->i',vec_nprime,uz)
+    
+    return ret
+
+
 def get_NH_pluto_x():
     """return a structured array of times and cooresponding x-coordinates."""
 
@@ -123,6 +181,10 @@ def pos_at_time(et):
     x_table = get_NH_pluto_x()
     return interpolate(et, x_table, key_field='ET', value_field='X')
 
+def coordinate_at_time(et):
+    table = get_NH_pluto_coords()
+    return interpolate(et, table, key_field='ET', value_field=['X','Y','Z'])
+
 def pos_at_time_utc(utc=None):
     et = sp.unitim(utc, 'UTC', 'ET')
     return pos_at_time()
@@ -149,26 +211,23 @@ def orientation_at_pos(x):
     t = time_at_pos(x)
     return orientation_at_time(t)
 
+def trajectory2(t1, t2, dt):
+    """Read in New Horizons trajectory and orientation data"""
+    times = np.arange(t1,t2,dt)
+
+    pos = np.empty((len(times), 3), dtype=np.float64)
+    o   = np.empty((len(times), 3), dtype=np.float64)
+
+    for i,t in enumerate(times):
+        pos[i,:] = coordinate_at_time(t)
+        o[i,:]   = orientation_at_time(t)
+
+    return pos, o, times
+
+def trajectory(t1, t2, dt):
+    """Read in New Horizons trajectory and orientation data"""
+    pos, o, times = trajectory2(t1, t2, dt)
+    return pos, o
+
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    times = np.arange(flyby_start, flyby_end, 600)
-    positions = np.vectorize(pos_at_time)(times)
-    dick = np.linspace(-100,100,len(times))
-
-    fig, ax1 = plt.subplots()
-    ax1.set_xlabel('time')
-
-    ax2 = ax1.twiny()
-    ax2.set_xlabel('X ($R_p$)')
-
-    ax1.plot(times)
-    ax1.set_xlim(flyby_start, flyby_end)
-
-    et_ticks = ax1.get_xticks()
-    ax1.set_xticklabels([sp.timout(et, 'HR:MN:SC') for et in et_ticks])
-
-    ax2.set_xlim(flyby_start, flyby_end)
-    ax2.set_xticks(et_ticks)
-    ax2.set_xticklabels(['{0:.2f}'.format(pos_at_time(et)/1187) for et in et_ticks])
-
-    plt.show()
+    get_NH_pluto_coords()
