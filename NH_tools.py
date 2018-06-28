@@ -2,6 +2,7 @@ import numpy as np
 import csv
 from astropy.io import fits
 import spiceypy as sp
+from spice_tools import coordinate_at_time
 import SortedSearch as ss
 from matplotlib.ticker import FuncFormatter
 
@@ -176,25 +177,6 @@ def get_NH_pluto_x():
     ret['X'] = NH['X']*Sun_dir[0] + NH['Y']*Sun_dir[1] + NH['Z']*Sun_dir[2]
 
     return ret
-
-def pos_at_time(et):
-    x_table = get_NH_pluto_x()
-    return interpolate(et, x_table, key_field='ET', value_field='X')
-
-def coordinate_at_time(et):
-    table = get_NH_pluto_coords()
-    return interpolate(et, table, key_field='ET', value_field=['X','Y','Z'])
-
-def pos_at_time_utc(utc=None):
-    et = sp.unitim(utc, 'UTC', 'ET')
-    return pos_at_time()
-
-def time_at_pos(x):
-    """Return the interpolated SPICE ET time (TDB seconds since J2000) when NH
-    was at the given pluto x-coordinate
-    """
-    NH_x = get_NH_pluto_x()
-    return interpolate(x, NH_x, key_field='X', value_field='ET', reverse=True)
 
 def orientation_at_time(et):
     """Return the (Theta,Phi,Spin) tuple when NH is at the given SPICE ET (TDB
