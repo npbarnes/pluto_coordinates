@@ -75,7 +75,7 @@ def pydatetime2et(dt):
     return sp.str2et(utc_str)
 
 def met2et(met):
-    return scs2e(nh_body_code, met)
+    return sp.scs2e(nh_body_code, met)
 
 def met2pydatetime(met):
     """Takes in a full MET string, outputs a datetime object at that time.
@@ -251,7 +251,7 @@ def orientation_at_time(et):
     """Return the (Theta,Phi,Spin) tuple when NH is at the given SPICE ET (TDB
     seconds since J2000)
     """
-    raise NotImplemented
+    raise NotImplementedError
 
 def cmat_at_time(et, mccomas=False):
     """Get the C-Matrix that converts vectors from either McComas or internal coordinates
