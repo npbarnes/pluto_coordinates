@@ -60,6 +60,60 @@ pluto_id_code = sp.bodn2c('Pluto')
 nh_body_code = sp.bodn2c('New Horizons')
 nh_inst_code = -98000
 swap_inst_code = sp.bodn2c('NH_SWAP')
+pepssi_inst_code = -98401
+pepssi_sector_inst_code = [ # i.e. index 0 is S0, etc.
+    -98402,
+    -98403,
+    -98404,
+    -98405,
+    -98406,
+]
+
+def fov_mask(vs, inst_name, et):
+    """Return a mask that gives wich particles are in the fov of the New Horizons
+    instrument, inst_name, at ET time et.
+    v: N by 3 array of velocity vectors in PLUTO_MCCOMAS coordinates.
+    inst_name: The instrument NAIF ID or object name. SWAP currently doesn't work with
+        the SPICE fovray function, so it is not supported, but most instruments
+        should work, in particlular PEPSSI and each of its sectors and detectors.
+    et: The ET time for spacecraft position and orientation
+    """
+    mask = np.empty(vs.shape[0], dtype=bool)
+    for i,v in enumerate(vs):
+        mask[i] = sp.fovray(inst_name, -v, "PLUTO_MCCOMAS", "NONE", "NEW_HORIZONS", et)
+    return mask
+
+def approx_fov_mask(vs, inst_code, et, angle=None):
+    """Similar to fov_mask, but it just looks for velocities within some angle of
+    the boresight instead of checking the actual fov polygon. This routine is
+    substantially faster than fov_mask.
+    """
+    n_vectors = 25
+    str_buf_len = 255
+    shape, frame, boresight, _, bounds = sp.getfov(
+        inst_code,
+        n_vectors,
+        str_buf_len,
+        str_buf_len
+    )
+    # Compute angle (if needed) and compute its consine
+    if angle is None:
+        # Angle is the maximum angle between the borsight and the boundary vectors
+        angle = max((sp.vsep(boresight, bound) for bound in bounds))
+    cangle = cos(angle)
+
+    # Transform the boresight into McComas coordinates
+    xform = sp.pxform(frame, "PLUTO_MCCOMAS", et)
+    boresight = xform.dot(boresight)
+
+    # Find unit look direction vectors from the velocity vectors
+    look = -vs/np.linalg.norm(vs, axis=-1, keepdims=True)
+
+    # dot product all the look vectors with the boresight vector
+    # Recall that the dot product between unit vectors is the cosine
+    # of the angle between them.
+    dots = np.inner(look, boresight)
+    return dots > cangle
 
 def et2pydatetime(et):
     utc_str = sp.timout(et, 'Mon DD,YYYY  HR:MN:SC ::UTC')
