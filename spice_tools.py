@@ -53,12 +53,13 @@ flyby_start = sp.str2et('2015-07-14T10:59:51.0000')
 flyby_end   = sp.str2et('2015-07-14T16:00:01.0000')
 flyby_lmargin = sp.str2et('2015-07-14T10:00:00.0000')
 flyby_rmargin   = sp.str2et('2015-07-14T17:00:00.0000')
+nh_in_wake   = sp.str2et('2015-07-14T12:30:00.0000')
 
 # Other commonly used variables
+pluto_id_code = sp.bodn2c('Pluto')
 nh_body_code = sp.bodn2c('New Horizons')
 nh_inst_code = -98000
 swap_inst_code = sp.bodn2c('NH_SWAP')
-pluto_id_code = sp.bodn2c('Pluto')
 
 def et2pydatetime(et):
     utc_str = sp.timout(et, 'Mon DD,YYYY  HR:MN:SC ::UTC')
