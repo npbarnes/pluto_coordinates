@@ -157,7 +157,9 @@ def vec2tp(l):
     lat = sp.convrt(lat, 'RADIANS', 'DEGREES')
     lon = sp.convrt(lon, 'RADIANS', 'DEGREES')
 
-    return lat, fix( 90.0 - lon , 180.0, -180.0 )
+    return lat, fix( 90.0 - lon, 180.0, -180.0 )
+
+
 
 def look_directions(v, cmat):
     """Computes the SWAP look direction phi and theta for each of
@@ -186,7 +188,7 @@ def time_at_pos(targ, crdsys='RECTANGULAR', coord='X', beg_end=None, n_intervals
     of those things.
 
     targ: position in kilometers
-    beg_end: Time interval to search for targ given as a tuple of ET times. 
+    beg_end: Time interval to search for targ given as a tuple of ET times.
              Defaults to (flyby_start, flyby_end).
     mccomas: Specifies whether the position is in McComas coordinates
     """
@@ -298,4 +300,3 @@ def trajectory(t1, t2, dt, mccomas=False):
         cmat[i,:,:] = cmat_at_time(t, mccomas=mccomas)
 
     return pos, cmat, times
-
