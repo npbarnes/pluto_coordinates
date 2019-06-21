@@ -88,7 +88,11 @@ def mpldate2et(d):
 def et2mpldate(et):
     return date2num(et2pydatetime(et))
 
-"""Pasive rotation matricies used to change coordinate systems. These are only for 
+def pydatetime2mpldate(dt):
+    return et2mpldate(pydatetime2et(dt))
+
+
+"""Pasive rotation matricies used to change coordinate systems. These are only for
 backward compatability. Use SPICE C-Matricies instead.
 """
 def Rx(a):
