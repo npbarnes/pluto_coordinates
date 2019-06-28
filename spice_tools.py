@@ -50,10 +50,13 @@ rehearsal_lmargin = sp.str2et('2014-07-12T11:00:00.0000')
 rehearsal_rmargin = sp.str2et('2014-07-12T18:00:00.0000')
 
 flyby_start = sp.str2et('2015-07-14T10:59:51.0000')
+last_sw = sp.str2et('2015-07-14T11:10:00.0000')
 flyby_end   = sp.str2et('2015-07-14T16:00:01.0000')
 flyby_lmargin = sp.str2et('2015-07-14T10:00:00.0000')
 flyby_rmargin   = sp.str2et('2015-07-14T17:00:00.0000')
 nh_in_wake   = sp.str2et('2015-07-14T12:30:00.0000')
+hi_burst = sp.str2et('2015-07-14T11:54:00.0000')
+plutopause = sp.str2et('2015-07-14T14:10:00.0000')
 
 # Other commonly used variables
 pluto_id_code = sp.bodn2c('Pluto')
