@@ -3,6 +3,7 @@ import spiceypy as sp
 from math import sin, cos, radians
 from datetime import datetime
 from matplotlib.dates import date2num, num2date
+from SphericalGeometry import SphericalPolygon
 
 # Leap Seconds Kernel
 sp.furnsh('/home/nathan/Code/coordinates/NH_SPICE_KERNELS/data/lsk/naif0012.tls')
@@ -72,24 +73,47 @@ pepssi_sector_inst_code = [ # i.e. index 0 is S0, etc.
     -98406,
 ]
 
-def fov_mask(vs, inst_name, et):
+def get_fov_data(inst, et, frame="PLUTO_MCCOMAS"):
+    if isinstance(inst, str):
+        inst = sp.bodn2c(inst)
+    n_vectors = 25
+    str_buf_len = 255
+    shape, inst_frame, boresight, _, bounds = sp.getfov(
+        inst,
+        n_vectors,
+        str_buf_len,
+        str_buf_len
+    )
+    xform = sp.pxform(inst_frame, frame, et)
+    boresight = xform.dot(boresight)
+    bounds = np.asarray([xform.dot(b) for b in bounds])
+    return shape, boresight, bounds
+
+def fov_polygon(inst, et, frame='PLUTO_MCCOMAS'):
+    shape, boresight, bounds = get_fov_data(inst, et, frame)
+    if shape != 'POLYGON' and shape != 'RECTANGLE':
+        raise ValueError("The FOV shape of the instrument must be POLYGON or RECTANGLE")
+
+    sp = SphericalPolygon(bounds, boresight)
+    return sp
+
+def fov_mask(look, inst, et):
     """Return a mask that gives wich particles are in the fov of the New Horizons
-    instrument, inst_name, at ET time et.
-    v: N by 3 array of velocity vectors in PLUTO_MCCOMAS coordinates.
-    inst_name: The instrument NAIF ID or object name. SWAP currently doesn't work with
-        the SPICE fovray function, so it is not supported, but most instruments
-        should work, in particlular PEPSSI and each of its sectors and detectors.
+    instrument, at the specified ET.
+    look: N by 3 array of look direction vectors in PLUTO_MCCOMAS coordinates.
+    inst: The instrument NAIF ID or object name. Any instrument with polygon or
+        rectanglular FOV should work.
     et: The ET time for spacecraft position and orientation
     """
-    mask = np.empty(vs.shape[0], dtype=bool)
-    for i,v in enumerate(vs):
-        mask[i] = sp.fovray(inst_name, -v, "PLUTO_MCCOMAS", "NONE", "NEW_HORIZONS", et)
+    sp = fov_polygon(inst, et)
+    mask = sp.contains_point(look)
     return mask
 
 def approx_fov_mask(vs, inst_code, et, angle=None):
     """Similar to fov_mask, but it just looks for velocities within some angle of
-    the boresight instead of checking the actual fov polygon. This routine is
-    substantially faster than fov_mask.
+    the boresight instead of checking the actual fov polygon. This routine used to
+    be substantially faster than fov_mask, but newer versions of fov_mask nearly
+    match the performance of this routine.
     """
     n_vectors = 25
     str_buf_len = 255
