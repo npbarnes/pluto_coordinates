@@ -57,7 +57,8 @@ flyby_lmargin = sp.str2et('2015-07-14T10:00:00.0000')
 flyby_rmargin   = sp.str2et('2015-07-14T17:00:00.0000')
 nh_in_wake   = sp.str2et('2015-07-14T12:30:00.0000')
 hi_burst = sp.str2et('2015-07-14T11:54:00.0000')
-plutopause = sp.str2et('2015-07-14T14:10:00.0000')
+plutopause_in = sp.str2et('2015-07-14T12:08:00.0000')
+plutopause_out = sp.str2et('2015-07-14T14:10:00.0000')
 
 # Other commonly used variables
 pluto_id_code = sp.bodn2c('Pluto')
