@@ -251,7 +251,7 @@ def look_directions(v, cmat):
     t,p,s angles are only supported for backward compatability.
     """
     if cmat.shape == (3,):
-        print "Warning: Using (Theta, Phi, Spin) instead of a SPICE C-Matrix"
+        print("Warning: Using (Theta, Phi, Spin) instead of a SPICE C-Matrix")
         cmat = R1(cmat)
 
     look = look_vectors(v,cmat)
