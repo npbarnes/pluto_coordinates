@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import csv
 from astropy.io import fits
@@ -7,7 +8,7 @@ import SortedSearch as ss
 from matplotlib.ticker import FuncFormatter
 
 # Leap Seconds Kernel
-sp.furnsh('/home/nathan/lib/lsk.tls')
+sp.furnsh(os.expanduser('~/lib/lsk.tls'))
 
 # Define some times in ET that may be useful
 rehersal_start = sp.str2et('2015-07-12T12:00:00.0000')
@@ -111,8 +112,8 @@ def interpolate(key, arr, key_field, value_field, reverse=False):
 
 def get_NH_pluto_coords():
     if not hasattr(get_NH_pluto_coords, 'NH'):
-        get_NH_pluto_coords.NH = read_horizons_et('/home/nathan/Code/coordinates/NH_Sun_J2000.txt')
-        get_NH_pluto_coords.Pluto = read_horizons_et('/home/nathan/Code/coordinates/Pluto_Sun_J2000.txt')
+        get_NH_pluto_coords.NH = read_horizons_et(os.expanduser('~/pluto_coordinates/NH_Sun_J2000.txt'))
+        get_NH_pluto_coords.Pluto = read_horizons_et(os.expanduser('~/pluto_coordinates/Pluto_Sun_J2000.txt'))
 
     NH = get_NH_pluto_coords.NH 
     Pluto = get_NH_pluto_coords.Pluto
@@ -157,8 +158,8 @@ def get_NH_pluto_x():
     """return a structured array of times and cooresponding x-coordinates."""
 
     if not hasattr(get_NH_pluto_x, 'NH'):
-        get_NH_pluto_x.NH = read_horizons_et('/home/nathan/Code/coordinates/NH_Pluto_J2000.txt')
-        get_NH_pluto_x.Sun = read_horizons_et('/home/nathan/Code/coordinates/Sun_Pluto_J2000.txt')
+        get_NH_pluto_x.NH = read_horizons_et(os.expanduser('~/pluto_coordinates/NH_Pluto_J2000.txt'))
+        get_NH_pluto_x.Sun = read_horizons_et(os.expanduser('~/pluto_coordinates/Sun_Pluto_J2000.txt'))
 
     NH = get_NH_pluto_x.NH 
     Sun = get_NH_pluto_x.Sun 
@@ -184,7 +185,7 @@ def orientation_at_time(et):
     """
     # The orientation file should only need to be read once per session
     if not hasattr(orientation_at_time, 'NH_angles'):
-        orientation_at_time.NH_angles = read_NH_orientation('/home/nathan/Code/coordinates/flyby_angles.csv')
+        orientation_at_time.NH_angles = read_NH_orientation(os.expanduser('~/pluto_coordinates/flyby_angles.csv'))
 
     return interpolate(et, orientation_at_time.NH_angles, key_field='ET', value_field=['THETA','PHI','SPIN'])
 
